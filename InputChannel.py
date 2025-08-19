@@ -104,7 +104,7 @@ def process_input_channel():
             for line in lines:
                 sentence = parse_input_line(line)
                 # turn sentences into tasks
-                process_sentence_into_task(sentence)
+                if sentence: process_sentence_into_task(sentence)
         elif data[0] == VISION_KEYWORD:
                 img = data[1]
                 img_array = np.array(img)
