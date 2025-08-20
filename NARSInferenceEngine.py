@@ -33,6 +33,12 @@ def do_semantic_inference_two_premise(j1, j2):
         assert False,"ERROR: Inference error " + str(error) + " between " + str(j1) + " and " + str(j2)
 
     return results
+    
+# Treat a premise as “negative” only if it is a Judgment with a truth value and that value is entirely negative.
+def _is_negative(j):
+    return (isinstance(j, NALGrammar.Sentences.Judgment)
+            and (j.value is not None)
+            and (j.value.confidence == 0 or j.value.frequency == 0))
 
 def do_semantic_inference_two_judgment(j1: NALGrammar.Sentences, j2: NALGrammar.Sentences) -> [NARSDataStructures.Other.Task]:
     """
@@ -52,7 +58,7 @@ def do_semantic_inference_two_judgment(j1: NALGrammar.Sentences, j2: NALGrammar.
     Asserts.assert_sentence(j2)
 
     if Config.DEBUG: Global.Global.debug_print(
-        "Trying inference between: " + j1.get_formatted_string() + " and " + j2.get_formatted_string())
+        "Trying inference between judgements: " + j1.get_formatted_string() + " and " + j2.get_formatted_string())
 
     """
     ===============================================
@@ -62,7 +68,7 @@ def do_semantic_inference_two_judgment(j1: NALGrammar.Sentences, j2: NALGrammar.
     ===============================================
     """
 
-    if j1.value.confidence == 0 or j2.value.confidence == 0:
+    if _is_negative(j1) and _is_negative(j2):
         if Config.DEBUG: Global.Global.debug_print("Can't do inference between negative premises")
         return [] # can't do inference with 2 entirely negative premises
 
@@ -85,10 +91,6 @@ def do_semantic_inference_two_judgment(j1: NALGrammar.Sentences, j2: NALGrammar.
         add_to_derived_sentences(derived_sentence, all_derived_sentences, j1, j2)
         return all_derived_sentences
 
-
-    if j1.value.frequency == 0 or j2.value.frequency == 0:
-        if Config.DEBUG: Global.Global.debug_print("Can't do inference between negative premises")
-        return [] # can't do inference with 2 entirely negative premises
 
     """
     ===============================================
@@ -446,7 +448,7 @@ def do_semantic_inference_goal_judgment(j1: NALGrammar.Sentences, j2: NALGrammar
     Asserts.assert_sentence(j2)
 
     if Config.DEBUG: Global.Global.debug_print(
-        "Trying inference between: " + j1.get_formatted_string() + " and " + j2.get_formatted_string())
+        "Trying inference between goal: " + j1.get_formatted_string() + " and judgement " + j2.get_formatted_string())
 
     """
     ===============================================

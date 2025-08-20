@@ -145,7 +145,7 @@ class Memory:
         related_concept = None
         if len(statement_concept.term_links) == 0: return None
         while count < Config.NUMBER_OF_ATTEMPTS_TO_SEARCH_FOR_SEMANTICALLY_RELATED_CONCEPT \
-                and (related_concept is None):
+                and (related_concept is None or related_concept is statement_concept):
             count += 1
             shared_term_concept = statement_concept.term_links.peek().object
             if statement_concept.term.is_first_order():
@@ -180,6 +180,7 @@ class Memory:
 
                 related_concept = bag.peek().object
 
+        if Config.DEBUG: Global.Global.debug_print("Memory: statement_concept: " + str(statement_concept) + " – related_concept: " + str(related_concept) + " – " + str(count) + " tries")
         return related_concept
 
     def get_best_explanation(self, j):
@@ -565,20 +566,19 @@ class Concept:
         assert_concept(subterm_concept)
         if subterm_concept in self.term_links: return  # already linked
 
-        # add to term links
-        # item = self.term_links.PUT_NEW(subterm_concept)
-        # self.term_links.change_priority(item.key, new_priority=0.5)
-        #
-        # item = subterm_concept.term_links.PUT_NEW(self)
-        # subterm_concept.term_links.change_priority(item.key, new_priority=0.5)
+        # add to term links (bidirectional)
+        item = self.term_links.PUT_NEW(subterm_concept)
+        self.term_links.change_priority(item.key, new_priority=0.5)
 
-        # add to subterm links
-        # item = self.subterm_links.PUT_NEW(subterm_concept)
-        # self.subterm_links.change_priority(item.key, new_priority=0.5)
-        #
-        # # add to superterm links
-        # item = subterm_concept.superterm_links.PUT_NEW(self)
-        # subterm_concept.superterm_links.change_priority(item.key, new_priority=0.5)
+        item = subterm_concept.term_links.PUT_NEW(self)
+        subterm_concept.term_links.change_priority(item.key, new_priority=0.5)
+
+        # record hierarchy relations (optional but useful)
+        item = self.subterm_links.PUT_NEW(subterm_concept)
+        self.subterm_links.change_priority(item.key, new_priority=0.5)
+
+        item = subterm_concept.superterm_links.PUT_NEW(self)
+        subterm_concept.superterm_links.change_priority(item.key, new_priority=0.5)
 
     def remove_term_link(self, concept):
         """

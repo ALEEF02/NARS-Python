@@ -345,7 +345,7 @@ class NARSGUI:
         self.gui_play_pause_button.grid(row=3, column=4, sticky='s')
 
         max_slider = 1000  # in milliseconds
-        min_slider = 50  # in milliseconds
+        min_slider = 1  # in milliseconds
         gui_duration_slider = tk.Scale(window, from_=max_slider, to=min_slider)
         self.gui_working_cycle_duration_slider = gui_duration_slider
         self.gui_working_cycle_duration_slider.grid(row=3, column=5, sticky='ns')
@@ -356,7 +356,7 @@ class NARSGUI:
             strings_pipe.send(("duration", gui_duration_slider.get()))
 
         self.gui_working_cycle_duration_slider.bind('<ButtonRelease-1>', slider_changed)
-        self.gui_working_cycle_duration_slider.set(min_slider)
+        self.gui_working_cycle_duration_slider.set(Config.TAU_WORKING_CYCLE_DURATION)
         slider_changed()  # set delay to max value
 
         checkbutton = tk.Checkbutton(window, text='Show atomic concepts', onvalue=1,

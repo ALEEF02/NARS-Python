@@ -86,7 +86,7 @@ class NARS:
         """
         while True:
             if Config.GUI_USE_INTERFACE:
-                time.sleep(0.1)
+                time.sleep(Config.TAU_WORKING_CYCLE_DURATION / 1000)
                 self.handle_gui_pipes()
 
             # global parameters
@@ -413,22 +413,28 @@ class NARS:
         Asserts.assert_task(task)
 
         j: Judgment = task.sentence
-        self.process_judgment_sentence_initial(j)
+        j = self.process_judgment_sentence_initial(j) # initial processing may simplify/transform the sentence (e.g., negation)
         if j.is_event():
             # only put non-derived atomic events in temporal module for now
             Global.Global.NARS.temporal_module.PUT_NEW(task)
 
         task_statement_concept = self.memory.peek_concept_item(j.statement).object
-        current_belief = task_statement_concept.belief_table.peek()
+        current_belief = task_statement_concept.belief_table.peek() or task_statement_concept.belief_table.peek_max()
+        
+        if Config.DEBUG: Global.Global.debug_print("Processing: Judgement Task: " + str(j) + "\tConcept: " + str(task_statement_concept) + "\tBelief: " + (str(current_belief) if current_belief else "None!"))
+        if current_belief is None:
+            return
+            
         self.process_judgment_sentence(current_belief)
 
-
-    def process_judgment_sentence_initial(self, j: Judgment):
+    def process_judgment_sentence_initial(self, j: Judgment) -> Judgment:
         if isinstance(j.statement, NALGrammar.Terms.CompoundTerm) \
                 and j.statement.connector == NALSyntax.TermConnector.Negation:
             j = NALInferenceRules.Immediate.Negation(j)
 
+        if Config.DEBUG: Global.Global.debug_print("Statement: " + str(j.statement))
         statement_concept_item = self.memory.peek_concept_item(j.statement)
+        if Config.DEBUG: Global.Global.debug_print(str(statement_concept_item))
         if statement_concept_item is None: return
 
         #self.memory.concepts_bag.strengthen_item_quality(task_statement_concept_item.key)
@@ -448,10 +454,12 @@ class NARS:
             self.memory.concepts_bag.change_priority(key=statement_concept_item.key,new_priority=best_belief.get_expectation())
 
         if Config.DEBUG:
-            string = "Integrated new BELIEF: " + j.get_formatted_string() + "from "
+            string = "Integrated new BELIEF: " + j.get_formatted_string() + " from "
             for premise in j.stamp.parent_premises:
                 string += str(premise) + ","
             Global.Global.debug_print(string)
+            
+        return j # For use if the negation was applied so callers operate on the right concept
 
 
     def process_judgment_sentence(self, j1: NALGrammar.Sentences.Judgment, revise=True):
@@ -484,8 +492,10 @@ class NARS:
             #todo handle tenses
         """
         Asserts.assert_task(task)
-
+        
+        if Config.DEBUG: Global.Global.debug_print("Question: " + str(task.sentence.statement))
         task_statement_concept_item = self.memory.peek_concept_item(task.sentence.statement)
+        if Config.DEBUG: Global.Global.debug_print("Question Task Concept Item: " + str(task_statement_concept_item))
         if task_statement_concept_item is None: return
 
         self.memory.concepts_bag.strengthen_item_quality(task_statement_concept_item.key)
@@ -498,6 +508,7 @@ class NARS:
             #
             # Answer the question
             #
+            if Config.DEBUG: Global.Global.debug_print("Question: Has best answer: " + str(best_answer.get_formatted_string()))
             if task.is_from_input and task.needs_to_be_answered_in_output:
                 Global.Global.print_to_output("OUT: " + best_answer.get_formatted_string())
                 task.needs_to_be_answered_in_output = False
@@ -505,6 +516,7 @@ class NARS:
             # do inference between answer and a related belief
             j1 = best_answer
         else:
+            if Config.DEBUG: Global.Global.debug_print("Question: Does not have best answer: " + str(task.sentence))
             # do inference between question and a related belief
             j1 = task.sentence
 
@@ -670,6 +682,7 @@ class NARS:
         statement_term = j1.statement
         # get (or create if necessary) statement concept, and sub-term concepts recursively
         statement_concept = self.memory.peek_concept(statement_term)
+        if Config.DEBUG: Global.Global.debug_print("Processing: Term: " + str(statement_term) + ". Concept: " + str(statement_concept))
 
         if related_concept is None:
             if Config.DEBUG: Global.Global.debug_print("Processing: Peeking randomly related concept")
@@ -690,8 +703,10 @@ class NARS:
                 elif len(statement_concept.superterm_links) > 0:
                     related_concept = statement_concept.superterm_links.peek().object
             else:
+                if Config.DEBUG: Global.Global.debug_print("Processing: Other statement type...")
                 related_concept = self.memory.get_semantically_related_concept(statement_concept)
 
+            if Config.DEBUG: Global.Global.debug_print("Processing: Related Concept: " + str(related_concept))
             if related_concept is None: return results
         else:
             Global.Global.debug_print("Processing: Using related concept " + str(related_concept))
@@ -706,7 +721,7 @@ class NARS:
 
         results = NARSInferenceEngine.do_semantic_inference_two_premise(j1, j2)
 
-        # check for a belief we can interact with
+        # check for a goal we can interact with
         j2 = related_concept.desire_table.peek_random()
 
         if j2 is None:

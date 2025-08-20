@@ -36,6 +36,7 @@ class Sentence:
         self.punctuation: NALSyntax.Punctuation = punctuation
         self.stamp = Stamp(self_sentence=self,occurrence_time=occurrence_time)
         self.value: EvidentialValue = value  # truth-value (for Judgment) or desire-value (for Goal) or None (for Question)
+        self.is_array = isinstance(self.statement, NALGrammar.Terms.SpatialTerm)  
 
         if self.punctuation != NALSyntax.Punctuation.Question:
             self.eternal_expectation = NALInferenceRules.TruthValueFunctions.Expectation(self.value.frequency,

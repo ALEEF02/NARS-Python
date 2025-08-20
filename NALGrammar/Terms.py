@@ -77,15 +77,16 @@ def simplify(term):
 
         :returns The simplified term
     """
-    return term #todo
     simplified_term = term
 
+    """
     if isinstance(term, StatementTerm):
         simplified_term = StatementTerm(subject_term=simplify(term.get_subject_term()),
                                         predicate_term=simplify(term.get_predicate_term()),
                                         copula=term.get_copula(),
                                         interval=term.interval)
-    elif isinstance(term, CompoundTerm):
+    """
+    if isinstance(term, CompoundTerm):
         if term.connector == NALSyntax.TermConnector.Negation and \
                 len(term.subterms) == 1 and \
                 isinstance(term.subterms[0], CompoundTerm) and \
@@ -445,6 +446,8 @@ class CompoundTerm(Term):
             else:
                 connector_string = internal_string[0:2]  # Statement connector
             connector = NALSyntax.TermConnector.get_term_connector_from_string(connector_string)
+        
+            assert (connector is not None), "Connector could not be parsed from CompoundTerm string."
 
             assert (internal_string[
                         len(
