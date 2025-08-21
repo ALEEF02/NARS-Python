@@ -520,7 +520,21 @@ class NARS:
             # do inference between question and a related belief
             j1 = task.sentence
 
-        self.process_sentence_semantic_inference(j1)
+        results = self.process_sentence_semantic_inference(j1)
+        for result in results:
+            self.global_buffer.PUT_NEW(NARSDataStructures.Other.Task(result))
+        
+        # After inference, re-check the concept for a best answer
+        if task.is_from_input and task.needs_to_be_answered_in_output:
+            concept_item_after = self.memory.peek_concept_item(task.sentence.statement)
+            if concept_item_after is not None:
+                concept_after = concept_item_after.object
+                best_answer_after = concept_after.belief_table.peek_max()
+                if best_answer_after is not None:
+                    if Config.DEBUG:
+                        Global.Global.debug_print("Question: Has best answer (after inference): " + str(best_answer_after.get_formatted_string()))
+                    Global.Global.print_to_output("OUT: " + best_answer_after.get_formatted_string())
+                    task.needs_to_be_answered_in_output = False
 
 
     def process_goal_task(self, task: NARSDataStructures.Other.Task):

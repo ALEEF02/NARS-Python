@@ -9,6 +9,7 @@ import re
 import numpy as np
 
 import Global
+import Config
 import NALSyntax
 import Asserts
 from NALGrammar import Sentences, Values
@@ -300,6 +301,7 @@ class CompoundTerm(Term):
             if NALSyntax.TermConnector.is_order_invariant(term_connector):
                 # order doesn't matter, alphabetize so the system can recognize the same term
                 subterms.sort(key=lambda t: str(t))
+                self.subterms = subterms
 
             # check if it's a set
             is_extensional_set = (term_connector == NALSyntax.TermConnector.ExtensionalSetStart)
@@ -389,6 +391,7 @@ class CompoundTerm(Term):
         else:
             string = self.connector.value + NALSyntax.StatementSyntax.TermDivider.value
 
+        if Config.DEBUG and len(self.subterms) > 1: Global.Global.debug_print("Compound Term: Creating term string from [" + ', '.join(str(item) for item in self.subterms) + "]")
         for i in range(len(self.subterms)):
             subterm = self.subterms[i]
             string = string + subterm.get_term_string() + NALSyntax.StatementSyntax.TermDivider.value

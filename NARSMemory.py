@@ -147,11 +147,12 @@ class Memory:
         while count < Config.NUMBER_OF_ATTEMPTS_TO_SEARCH_FOR_SEMANTICALLY_RELATED_CONCEPT \
                 and (related_concept is None or related_concept is statement_concept):
             count += 1
-            shared_term_concept = statement_concept.term_links.peek().object
             if statement_concept.term.is_first_order():
                 # S --> P
                 if len(statement_concept.term_links) != 0:
-                    shared_term_concept = statement_concept.term_links.peek().object
+                    shared_term_concept = statement_concept.term_links.peek()
+                    if not shared_term_concept: continue
+                    shared_term_concept = shared_term_concept.object
                     if isinstance(shared_term_concept.term, NALGrammar.Terms.AtomicTerm):
                         # atomic term concept (S)
                         related_concept = shared_term_concept.term_links.peek().object # peek additional term links to get another statement term
@@ -169,6 +170,7 @@ class Memory:
             else:
                 # S ==> P
                 # term linked concept is A-->B
+                shared_term_concept = statement_concept.term_links.peek().object
                 if len(shared_term_concept.prediction_links) == 0 and len(shared_term_concept.explanation_links) == 0:
                     continue
                 elif len(shared_term_concept.prediction_links) != 0 and len(shared_term_concept.explanation_links) == 0:
@@ -180,6 +182,7 @@ class Memory:
 
                 related_concept = bag.peek().object
 
+        if related_concept is statement_concept: related_concept = None
         if Config.DEBUG: Global.Global.debug_print("Memory: statement_concept: " + str(statement_concept) + " – related_concept: " + str(related_concept) + " – " + str(count) + " tries")
         return related_concept
 

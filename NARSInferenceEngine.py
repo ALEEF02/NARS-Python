@@ -427,7 +427,10 @@ def do_semantic_inference_two_judgment(j1: NALGrammar.Sentences, j2: NALGrammar.
     # mark sentences as interacted with each other
     #j1.mutually_add_to_interacted_sentences(j2)
 
-    if Config.DEBUG: Global.Global.debug_print("Derived " + str(len(all_derived_sentences)) + " inference results.")
+    if Config.DEBUG:
+        Global.Global.debug_print("Derived " + str(len(all_derived_sentences)) + " inference results:")
+        for sentence in all_derived_sentences:
+            Global.Global.debug_print('\t' + str(sentence))
 
     return all_derived_sentences
 
@@ -503,7 +506,10 @@ def do_semantic_inference_goal_judgment(j1: NALGrammar.Sentences, j2: NALGrammar
     ===============================================
     """
 
-    if Config.DEBUG: Global.Global.debug_print("Derived " + str(len(all_derived_sentences)) + " inference results.")
+    if Config.DEBUG:
+        Global.Global.debug_print("Derived " + str(len(all_derived_sentences)) + " inference results:")
+        for sentence in all_derived_sentences:
+            Global.Global.debug_print('\t' + str(sentence))
 
     return all_derived_sentences
 

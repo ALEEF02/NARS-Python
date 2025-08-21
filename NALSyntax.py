@@ -96,6 +96,11 @@ class TermConnector(enum.Enum):
 
     @classmethod
     def is_order_invariant(cls, connector):
+        """
+            Commutative connectors: order of subterms does not affect meaning.
+            In NAL: intersections (&, |) are commutative; differences (-, ~) are NOT.
+            Higher-order conjunction/disjunction are also commutative.
+        """
         return (connector is cls.ExtensionalIntersection or
                 connector is cls.IntensionalIntersection or
                 connector is cls.ExtensionalSetStart or
